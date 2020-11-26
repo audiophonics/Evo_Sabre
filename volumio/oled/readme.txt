@@ -22,11 +22,8 @@ on Audiophonics EVO SABRE module
 Usage -----------------------------------------------------------------
 
 - Make sure networking is enabled and your Pi has internet access
-- Download and copy files in /home/pi/oled
-- Enter the /home/pi/oled directory 
-	$ cd /home/pi/oled 
 - Run installation script as root 
-	$ sudo bash install
+- sudo bash install
 - Reboot and OLED#2 should be working
 
 Tested versions -------------------------------------------------------
