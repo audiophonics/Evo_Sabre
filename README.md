@@ -11,11 +11,11 @@ This repository holds sources and methods for installing the specific hardware f
 ### moOde audio
 * Installation of OLED #2 Display
 
-## Important note : 
+## Important notes : 
 To avoid conflicts it is recommanded to use this toolset on a **fresh** (non-customized) release. 
 It is strongly advised to back-up configuration file and your local music library before installing anything with this toolset.
 
-Some devices require the audio output to be already configured with the ES9038 driver to work. You should do this in your regular distribution interface before running any customization script.
+Some devices require the audio output to be already configured with the ES9038 driver to work. You should do this in your regular distribution interface **before** running any customization script.
 
 **Remember your device must have network access to download dependencies.** This toolset is not designed for offline installation.
 
