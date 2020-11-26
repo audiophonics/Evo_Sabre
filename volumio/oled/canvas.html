@@ -1,0 +1,196 @@
+<html>
+	<head>
+
+		
+
+	</head>
+	<body>
+		<canvas id="canvas" style="border:solid 1px black"></canvas>
+		<br>
+		<span>Largeur écran </span><input id = "screenwidth" type="number" value="256" placeholder = "largeur ecran"> 
+		<br>
+		<span>Hauteur écran </span><input id = "h" type="number" value="64" placeholder = "(preview)"> 
+		<br>
+		<span>Tolérance raster </span><input id = "tolerance" type="number" max="100" min="1" placeholder = "si pas pixel perfect" value = 50>
+		<br>		
+		<span>Fichier image source </span><input id = "file" type="file">
+		<br>
+		
+		
+		<button id = "reload">Preview</button>
+		<button id = "savebtn">Save</button>
+		
+		
+		<script>
+			var ratio = 1;
+			var pixel_perfect = false;
+			
+			var	w = document.getElementById('screenwidth');
+			var	h = document.getElementById('h');
+			var tolerance = document.getElementById('tolerance');
+			var canvas = document.getElementById("canvas");
+			canvas.height = h.value;
+			canvas.width = w.value;
+			
+			var ctx = canvas.getContext('2d');
+			
+			//Loading of the home test image - img1
+
+			var input = document.getElementById('file');
+			input.onchange = blob_to_pic
+			
+			var savebtn = document.getElementById('savebtn');
+			savebtn.onclick = save
+			
+			screenwidth = document.getElementById("screenwidth")
+			
+			
+			function blob_to_pic() {
+				renderblob(input.files[0],preview);
+			}
+
+			var renderblob = function(blob,callback){
+			  let img = new Image();
+			  img.onload = function(){
+			    ratio = (screenwidth.value/img.width)
+				if(ratio === 1){
+					console.log("Pixel Perfect")
+					pixel_perfect = true
+				}else{
+					pixel_perfect = false;
+					console.log("Pas pixel perfect, il vaudrait mieux utiliser un fichier plus adapté")
+				}
+				canvas.width = img.width * ratio
+				canvas.height = img.height * ratio
+				
+				ctx.drawImage(img, 0, 0,img.width * ratio,img.height * ratio  )
+				if(typeof callback === "function"){
+					callback();
+				}
+			  }
+
+			  img.src = URL.createObjectURL(blob);
+			};
+						
+			
+			function map_pixels(){
+
+				imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+				
+				let i = 0
+				
+				data = [];
+
+				values = [];
+				
+				let z = imgdata.length
+				while(i<z){
+					val = Math.min(imgdata[i],imgdata[i+1],imgdata[i+2],imgdata[i+3])
+					if(!values.includes(val)){
+						values.push(val)
+					}
+					data.push(val)
+					i+=4
+				}
+					
+				return(data)
+			}
+			
+			var reload = document.getElementById("reload");
+			reload.onclick = tolerance.onchange = h.onchange = ()=>{
+				renderblob(input.files[0],()=>{
+					preview()
+				});
+			}
+			
+			function preview(){
+				
+				if(!h.value || !w.value){
+					alert("il faut renseigner la largeur et la hauteur de l'écran")
+					return
+				}		
+
+				if(!pixel_perfect && !tolerance.value){
+					alert("il faut spécifier le % de tolérance si l'image et l'écran ne sont pas pixel perfect")
+					return
+				}
+
+				b = map_pixels()
+				canvas.height = h.value
+				canvas.width = w.value
+				s = 0;
+				t= (tolerance.value/100)*255
+				for(let i in b){
+					x = s%canvas.width
+					y = Math.floor(s/canvas.width) 
+					s++;
+					if(b[i] < t){
+						ctx.fillStyle = "black"
+						ctx.fillRect(x,y,1,1)
+					}
+				}				
+			}
+			
+			function save(){
+				imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+				let z = imgdata.length
+							let i = 0
+							data = [];
+							values = [];
+							while(i<z){
+								val = Math.max(imgdata[i],imgdata[i+1],imgdata[i+2],imgdata[i+3])
+								if(!values.includes(val)){
+									values.push(val)
+								}
+								data.push(val)
+								i+=4
+							}
+				if(values.length > 2){
+					alert("Il y a une erreur quelque part")}
+				else{
+					download(compress(data))
+				}
+			}
+			
+			function download(data) {
+				var a 	= document.createElement("a");
+				var b =  new Blob([data], {type: "text/plain"})
+				a.href = URL.createObjectURL(b)
+				a.download = "logo.logo";
+				document.body.appendChild(a);
+				a.click();
+				setTimeout(function() {
+					document.body.removeChild(a);
+				//	window.URL.revokeObjectURL(url);  
+				}, 0); 
+				
+			}
+
+			function compress(data){
+				let compressed = ""
+				let counter = 0;
+				let previous_data = 0;
+				let l = data.length
+				let i = 0;
+				while(i <= l){
+
+					if(previous_data !== data[i] ||  i === l ){
+						compressed+=(counter+"\n")
+						counter = 1;
+					}
+					else{
+						counter++;
+					}
+					previous_data = data[i]
+					i++;
+					
+				}
+				return(compressed)
+			}
+
+		</script>
+		
+	</body>
+	
+	
+</html>
