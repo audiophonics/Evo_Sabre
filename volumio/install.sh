@@ -7,7 +7,7 @@ printf "\n\n#=#=#=#=#=#=#=#=#=# Installation of whole package (Volumio) \n\n" >>
 bash install_remote.sh &&
 bash install_web_interface.sh &&
 bash install_oled.sh &&
-node enable_volumio_wizard.js
+node enable_volumio_wizard.js &&
 cd ..
 
 exit 0
