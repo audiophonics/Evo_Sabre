@@ -2,7 +2,8 @@
 
 start_time="$(date +"%T")"
 
-# install timezone changer
+# ---------------------------------------------------
+# Allow user to change timezone in system
 sudo groupadd audiophonics
 sudo usermod -a -G audiophonics volumio
 
@@ -10,12 +11,14 @@ if ! grep -q '%audiophonics ALL=(ALL) NOPASSWD: /bin/sh ${PWD}/settime.sh *' "/e
 echo '%audiophonics ALL=(ALL) NOPASSWD: /bin/sh ${PWD}/settime.sh *' | sudo EDITOR='tee -a' visudo
 fi
 
-
+# ---------------------------------------------------
+# Enable service
 printf "[Unit]
 Description=Audiophonics toolset in a web interface
 After=volumio.service
 
 [Service]
+WorkingDirectory=${PWD}
 ExecStart=/bin/node ${PWD}/apts_web_interface.js
 StandardOutput=null
 Type=simple
@@ -27,6 +30,7 @@ WantedBy=multi-user.target
 
 systemctl enable apts_web_interface
 systemctl start apts_web_interface
+
 # ---------------------------------------------------
 # Say something nice and exit
 printf "\n\n-----------------------------------------\n"

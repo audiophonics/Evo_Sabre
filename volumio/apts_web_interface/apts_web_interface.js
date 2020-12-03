@@ -68,7 +68,7 @@ function server(req,res){
 }
 
 function set_timezone(tz,cb){
-	cp.exec(`sudo /bin/sh /home/volumio/evo/timezone/settime.sh ${tz}`,handle);
+	cp.exec(`sudo /bin/sh settime.sh ${tz}`,handle);
 	function handle(e,stdout,stderr){
 		let regtest = new RegExp(tz,"i");
 		if(e){cb(false,e)}
