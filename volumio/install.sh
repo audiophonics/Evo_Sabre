@@ -10,4 +10,12 @@ bash install_oled.sh &&
 node enable_volumio_wizard.js &&
 cd ..
 
+
+
+# ---------------------------------------------------
+# Say something nice and exit
+printf "\n\n#=#=#=#=#=#=#=#=#=# \n"
+echo started at $start_time finished at "$(date +"%T")"
+echo "You should reboot now. Enjoy your Evo Sabre and have a nice day."
+
 exit 0
