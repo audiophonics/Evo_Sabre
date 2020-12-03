@@ -15,9 +15,7 @@ Use this script on a fresh Volumio install to add support for Audiophonics EVO S
 Leftmost  OLED#1 display is firmware driven.  
 Rightmost OLED#2 display is software driven. 
 Software (python) uses API(s) available in the distribution to gather and display data regarding playback, sampling rate, volume...etc. 
-This script contains a set of instruction for automatic installation of this
-software for a Volumio distribution running on a Raspberry Pi4 mounted
-on Audiophonics EVO SABRE module
+This script contains a set of instruction for automatic installation of this software for a Volumio distribution running on a Raspberry Pi4 mounted on Audiophonics EVO SABRE module
 
 Usage -----------------------------------------------------------------
 
