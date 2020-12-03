@@ -3,7 +3,7 @@
 start_time="$(date +"%T")"
 this_directory=${PWD}
 cd remote
-printf "\n\n##### INSTANCE OF INSTALLATION REMOTE CONTROL FOR VOLUMIO ####\n\n" >> install_log.txt
+printf "\n\n##### INSTANCE OF INSTALLATION REMOTE CONTROL FOR VOLUMIO ####\n\n" >> "${this_directory}/log.txt"
 bash install.sh |& tee -a "${this_directory}/log.txt"
 cd ..
 
