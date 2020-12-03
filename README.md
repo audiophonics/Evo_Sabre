@@ -22,6 +22,12 @@ Some devices require the audio output to be already configured with the ES9038 d
 **Remember your device must have network access to download dependencies.** This toolset is not designed for offline installation.
 
 ## Usage : 
+
+* Update package repo list
+```bash
+sudo apt-get update
+```
+
 * Download source files (this repository).
 ```bash
 git clone http://github.com/audiophonics/Evo_Sabre
