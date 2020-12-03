@@ -2,7 +2,7 @@
 
 start_time="$(date +"%T")"
 
-printf "\n\n#=#=#=#=#=#=#=#=#=# Installation of whole package (Volumio) \n\n" >> log.txt
+printf "\n\n#=#=#=#=#=#=#=#=#=# Installation of whole package (Volumio) \n\n" > log.txt
 bash install_remote.sh &&
 bash install_web_interface.sh &&
 bash install_oled.sh &&
