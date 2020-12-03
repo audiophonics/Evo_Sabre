@@ -7,6 +7,8 @@ This repository holds sources and methods for installing the specific hardware f
  
 ### Volumio
 * Installation of OLED #2 Display
+* Installation of IR remote
+* Installation of aptswi (web interface with some system options) 
   
 ### moOde audio
 * Installation of OLED #2 Display
@@ -35,9 +37,9 @@ cd volumio
 # for moOde audio
 cd moode
 ```
-* Run the installation script **as root** for the feature you want (use `ls` to get list of all available scripts)
+* Run the installation script **as root** to install all available features
 ```bash
-sudo bash install_oled.sh
+sudo bash install.sh
 ```
 
 *most scripts deal with hardware configuration and will require you to reboot after completion. A successful script installation will explicitely notify you from terminal if a reboot is needed.*
