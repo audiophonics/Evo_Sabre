@@ -6,7 +6,7 @@ Device		:  	Audiophonics EVO SABRE with Raspberry Pi4
 Distribution	:  	Volumio
 Version		: 	1.21
 Author 		:	Olivier Schwach
-Date (d/m/y) 	: 	02/16/2021
+Date (d/m/y) 	: 	16/02/2021
 
 Abstract --------------------------------------------------------------
 
