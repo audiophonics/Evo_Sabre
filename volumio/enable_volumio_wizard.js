@@ -7,7 +7,7 @@ fs.readFile(path,handle);
 
 function handle(rerr,data){
 	if(rerr){
-		console.log("ERROR READING CONFIG FILE :", path,"\n\t", rerr);
+		console.warn("ERROR READING CONFIG FILE :", path,"\n\t", rerr);
 		return
 	}
 	try{
@@ -19,11 +19,11 @@ function handle(rerr,data){
 
 		fs.writeFile(path, JSON.stringify(pdata), (werr) => {
 		  if (werr) throw err;
-		  console.log('SUCCESS : wizard enabled');
+		  console.log('Volumio Web interface wizard (re)enabled.');
 		});
 	}
 	catch(e){
-		console.log("ERROR WRITING INTO CONFIG FILE :", path,"\n\t", e);
+		console.warn("ERROR WRITING INTO CONFIG FILE :", path,"\n\t", e);
 
 	}
 }
