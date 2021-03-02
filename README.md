@@ -26,12 +26,12 @@ In Volumio, you will also find an option to change your timezone since this is n
 
 
 ## Important notes : 
-To avoid conflicts it is recommanded to use this toolset on a **fresh** (non-customized) release. 
-It is strongly advised to back-up configuration file and your local music library before installing anything with this toolset.
+* **It should be generally safe to use this script on a non-fresh installation** of either Volumio or moOde if something broke after an update or if you messed with the configuration. However keep in mind that I designed this script for the purpose of building and debugging our custom releases and I could not test every possible scenario where the script would run on an already customized / configured device. Remember that you use this installation script at your own risks and that some extreme cases could lead you to reflash your SD card. So be sure to backup everything important (local music files on the SD card or the loggins for your volumio account) before doing anything. 
 
-Some devices require the audio output to be already configured with the ES9038 driver to work. You should do this in your regular distribution interface **before** running any customization script.
 
-**Remember your device must have network access to download dependencies.** This toolset is not designed for offline installation.
+* **Most of what can be configured from the regular distro web interface is left untouched by this script**. If you use this installation method on a fresh install, you still have to configure Volumio / moOde in their WebUi (allowing MPD to control volume and such). Some distros may require the audio output to be already configured with the ES9038 driver to work. I suggest you do this in your regular distribution interface **before** running any customization script.
+
+* **Your device must have network access to download dependencies.** This set of files is not designed for offline installation.
 
 ## Usage : 
 
