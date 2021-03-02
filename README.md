@@ -17,7 +17,7 @@ This repository holds sources and methods for installing the specific hardware f
 
 ## APTSWI : Audiophonics ToolSet in a Web Interface
 Some options can be configured by the user (such as OLED #2 brightness, sleep-delay or boot logo) in a tiny web interface powered by nodeJS. 
-You can get there by using your web-browser to open the port 4150 : 
+You can get there by using your web-browser to open the **port 4150** : 
 * On Volumio navigate to http://volumio:4150. 
 * Same thing on moOde Audio with http://moode:4150. 
 * It works with your EVO Sabre IP as well : http://192.168.xx.xx:4150.
