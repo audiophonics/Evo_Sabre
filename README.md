@@ -8,10 +8,22 @@ This repository holds sources and methods for installing the specific hardware f
 ### Volumio
 * Installation of OLED #2 Display
 * Installation of IR remote
-* Installation of aptswi (web interface with some system options) 
+* Installation of aptswi (web interface with some system options, see below) 
   
 ### moOde audio
 * Installation of OLED #2 Display
+* Installation of IR remote
+* Installation of aptswi (web interface with some system options, see below) 
+
+### APTSWI : Audiophonics ToolSet in a Web Interface
+Some options can be configured by the user (such as OLED #2 brightness, sleep-delay or boot logo) in a tiny web interface powered by nodeJS. 
+You can get there by using your web-browser to open the port 4150 : 
+* On Volumio navigate to http://volumio:4150. 
+* Same thing on moOde Audio with http://moode:4150. 
+* It works with your EVO Sabre IP as well : http://192.168.xx.xx:4150.
+
+In Volumio, you will also find an option to change your timezone since this is not natively possible without using SSH. After doing so you will need to restart OLED #2 (a reboot will also work) to have your right display print your local time.
+
 
 ## Important notes : 
 To avoid conflicts it is recommanded to use this toolset on a **fresh** (non-customized) release. 
