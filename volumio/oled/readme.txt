@@ -6,7 +6,7 @@ Device		:  	Audiophonics EVO SABRE with Raspberry Pi4
 Distribution	:  	Volumio
 Version		: 	1.22
 Author 		:	Olivier Schwach
-Date (d/m/y) 	: 	16/02/2021
+Date (d/m/y) 	: 	25/03/2021 
 
 Abstract --------------------------------------------------------------
 
@@ -39,7 +39,6 @@ Solution => Luckily there is a backport available. But since Raspbian Jessie is 
 
 #1.21 / feature
 Script now listen to unix socket to receive external commands and have its own section in audiophonics web interface if installed
-
 
 #1.22 / python dependencies 
 Now using pillow 8.1.2
