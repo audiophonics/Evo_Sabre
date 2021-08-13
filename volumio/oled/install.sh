@@ -21,7 +21,7 @@ install_dep_volumio() {
 
 
 start_time="$(date +"%T")"
-echo "* Installing : RaspDacMini Oled Display"
+echo "* Installing : Evo Sabre OLED#2"
 echo "" > install_log.txt
 
 install_dep_volumio
