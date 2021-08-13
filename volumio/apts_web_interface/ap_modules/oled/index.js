@@ -8,7 +8,7 @@ read_config();
 
 exports.module_head = `<div class="content_name">
                 <h2>Screen</h2>
-                <p>To configure your RaspDac Mini Oled display !</p>
+                <p>To configure your Evo Sabre OLED#2 display !</p>
             </div>`
 
 
@@ -312,27 +312,6 @@ exports.default_logo = function(data,callback){
 }
 
 // helpers --------------------------------
-
-function uds_proxy(message,callback){
-
-    if(typeof message !== "string"){
-        try{message = JSON.stringify(message)}
-        catch(e){ return console.log("Error in uds: expected data type : JSON, got",message)}
-    }
-    
-    let socket = net.Socket();
-    socket.connect(oled_path+"/input_for_display");
-    socket.on('connect', function() {
-        socket.write(message);
-        socket.destroy();
-        if(typeof callback ==="function") callback("Restart : OK");
-    });
-
-    socket.on('error', function(err){
-        if(typeof callback ==="function") callback(JSON.stringify(arguments));
-        console.log("UDS Error : "+JSON.stringify(arguments));
-    });   
-}
 
 
 function read_config(){
