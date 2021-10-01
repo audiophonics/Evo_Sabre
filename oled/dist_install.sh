@@ -16,7 +16,7 @@ case "$1" in
 			exit 1
 		fi
 	}
-
+ 
 	start_time="$(date +"%T")"
 	echo "* Installing : Evo Sabre OLED#2"
 	echo "" > install_log.txt
