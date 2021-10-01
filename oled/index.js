@@ -24,6 +24,28 @@ const opts = {
 	device: "/dev/spidev0.0",
 };
 
+
+var distro = process.argv[2],
+supported_distributions = ["volumio","moode"];
+if(!distro || !supported_distributions.includes(distro) ){
+	console.warn("Unknown target distribution : ",distro, "\nHere are the supported distributions : ", supported_distributions.join() );
+}
+
+switch (distro) {
+	case 'moode':
+	opts.divisor = 32;
+	opts.main_rate = 60;
+	break;
+	case 'volumio':
+	opts.divisor = 0xf1;
+	opts.main_rate = 40;
+	break;
+	default:
+	opts.divisor = 32;
+	opts.main_rate = 60;
+}
+
+
 http.createServer(server).listen(4153);
 function server(req,res){
 	let cmd = req.url.split("\/")[1];
@@ -498,7 +520,7 @@ ap_oled.prototype.playback_mode = function(){
 		this.scroller_x--;
 	}
 
-	this.update_interval = setInterval( ()=>{ this.refresh_action() },60);
+	this.update_interval = setInterval( ()=>{ this.refresh_action() },opts.main_rate);
 	this.refresh_action();
 }
 
@@ -570,25 +592,6 @@ fs.readFile("config.json",(err,data)=>{
 			console.log("Cannot read config file. Using default settings instead.");
 		}
 	}
-	
-	
-	let distro = process.argv[2],
-	supported_distributions = ["volumio","moode"];
-	if(!distro || !supported_distributions.includes(distro) ){
-		console.warn("Unknown target distribution : ",distro, "\nHere are the supported distributions : ", supported_distributions.join() );
-	}
-	
-	switch (distro) {
-		case 'moode':
-		opts.divisor = 32;
-		break;
-		case 'volumio':
-		opts.divisor = 0xf1;
-		break;
-		default:
-		opts.divisor = 0xf1;
-	}
-
 	
 	opts.contrast = CONTRAST;
 	
