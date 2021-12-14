@@ -1,6 +1,5 @@
 const cp = require("child_process");
 const fs = require("fs");
-const net = require("net");
 const oled_path = process.cwd() + "/../oled";
 var module_alert = "";
 var config = {};
