@@ -5,8 +5,7 @@ This repository holds sources and methods for installing the specific hardware f
 
 ## Currently supported : 
 
-### No, this is not working on Volumio 3 yet. Please be patient. 
-
+### No, this is not working on Volumio 3 yet. But you can find a working pre-built volumio 3 image for your EVO [here](https://www.audiophonics.fr/en/blog-diy-audio/23-start-up-evo-raspdac-rasptouch-raspdac-mini-with-a-pre-configured-image.html). 
 ### Volumio
 * Installation of OLED #2 Display
 * Installation of IR remote
