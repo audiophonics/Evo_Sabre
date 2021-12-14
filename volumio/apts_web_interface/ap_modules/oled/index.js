@@ -1,6 +1,5 @@
 const cp = require("child_process");
 const fs = require("fs");
-const net = require("net");
 const oled_path = process.cwd() + "/../oled";
 var module_alert = "";
 var config = {};
@@ -270,6 +269,9 @@ exports.update_config = function(data,callback){
     let tempNewConfig = JSON.parse(JSON.stringify(config));
     tempNewConfig[data.config_key] = data.value;
     writeConfig(tempNewConfig,callback);
+	
+	
+	
 	if(!data.curl_rt) cp.exec("sudo systemctl restart oled");
 	else{
 		 cp.exec(`curl "localhost:4153/${data.config_key}=${data.value}"`);
