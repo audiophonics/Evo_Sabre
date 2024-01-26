@@ -1,0 +1,12 @@
+#!/bin/sh
+case "$1" in
+ "login") 
+  node /usr/local/etc/evo_oled/lms/login.js
+;;
+ "install") 
+ if ! grep -q "evo_oled.tcz" /mnt/mmcblk0p2/tce/onboot.lst; then echo "evo_oled.tcz" >> /mnt/mmcblk0p2/tce/onboot.lst; fi 
+ sudo sed -i "s/.*USER_COMMAND_1.*/USER_COMMAND_1=\"sudo evo_oled\"/"  /usr/local/etc/pcp/pcp.cfg
+;;
+  *)
+  node /usr/local/etc/evo_oled/index.js
+esac
