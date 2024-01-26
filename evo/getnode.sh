@@ -11,5 +11,4 @@ rm -rf node/share/
 tce-load -wi squashfs-tools.tcz 
 mksquashfs node node.tcz
 rm -rf node
-mv node.tcz /mnt/mmcblk0p2/tce/optional/
 
