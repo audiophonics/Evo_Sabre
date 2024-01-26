@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "date-and-time": "^3.1.1",
+    "rpio": "^2.4.2"
+  }
+}
