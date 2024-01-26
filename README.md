@@ -41,6 +41,7 @@ Now that we have our files we have to :
 * Reboot once to get rid of installaton dependencies. 
 * Place all our files into /mnt/mmcblk0p2/tce/optional/
 * Load the extension for oled ```tce-load -li evo_oled```
+* Download the pcp-lirc extension ```tce-load -wli pcp-lirc.tcz```
 * Load the extension for remote ```tce-load -li evo_remote```
 * Run the configuration script for oled ```sudo evo_oled install```
 * Run the configuration script for remote ```sudo evo_remote install```
