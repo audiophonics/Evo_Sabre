@@ -8,7 +8,7 @@ It deals with :
 
 ## Prerequisites : ##
 * SSH access to the raspberry pi is required.
-* Starting from a fresh pcp image, the filesystem needs to be resized to be at least 200mb.
+* Starting from a fresh pcp image, the filesystem needs to be resized to be at least 500mb for the install (200mb is enough if you already built the files before).
 * Display oled#2 driver is written in nodejs, we need to download it and make it into a tce package (.tcz)
 
 ## Notes : ##
@@ -33,12 +33,26 @@ Just run the ```sh getnode.sh``` script and grab the resulting ```node.tcz``` fi
 This is also relatively easy. We need to have the lirc configuration files loaded in the right place. This extension also provides a tiny shell executable to provide a mecanism for starting the daemon & making the initial system configuration. To build the package you just need to run ```build.sh``` from the evo_remote directory and grab the resulting ```evo_remote.tcz``` and ```evo_remote.tcz.dep``` files. 
 
 ### evo_oled
-Same as before, this wraps the nodejs app into a tcz package and provides a small executable to start the daemon and handle system configuration.  To build the package you just need to run ```build.sh``` from the evo_oled directory and grab the resulting ```evo_oled.tcz``` and ```evo_oled.tcz.dep``` files. 
+Same as before, this wraps the nodejs app into a tcz package and provides a small executable to start the daemon and handle system configuration. 
+To build the package we need to build the npm package first : 
+```
+cd /home/tc/Evo_Sabre-pcp/evo/evo_oled/extension/usr/local/etc/evo_oled
+tce-load -li node
+tce-load -wi python3.8
+tce-load -wi compiletc
+npm install 
+```
+When all is done, 
+```
+cd /home/tc/Evo_Sabre-pcp/evo/evo_oled
+build.sh
+```
+and grab the resulting ```evo_oled.tcz``` and ```evo_oled.tcz.dep``` files. 
 
 
 ### Installation procedure ### 
 Now that we have our files we have to :
-* Reboot once to get rid of installaton dependencies. 
+* Reboot once (or reflash the whole OS & resize it as a 200mb filesystem if you want the lightest image possible) to get rid of installaton dependencies. 
 * Place all our files into /mnt/mmcblk0p2/tce/optional/
 * Load the extension for oled ```tce-load -li evo_oled```
 * Download the pcp-lirc extension ```tce-load -wli pcp-lirc.tcz```
