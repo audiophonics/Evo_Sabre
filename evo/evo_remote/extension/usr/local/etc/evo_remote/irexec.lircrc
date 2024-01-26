@@ -1,0 +1,39 @@
+begin
+prog = irexec
+button = poweroff
+config = exitcheck.sh shutdown
+end
+
+begin
+prog = irexec
+button = stop
+config = pcp stop
+end
+
+begin
+prog = irexec
+button = right
+config = pcp next
+end
+
+begin
+prog = irexec
+button = left
+config = pcp prev
+end
+
+begin
+prog = irexec
+button = pause
+config = pcp pause
+delay = 2
+repeat = 3
+end
+
+begin
+prog = irexec
+button = play
+config = pcp pause
+delay = 2
+repeat = 3
+end

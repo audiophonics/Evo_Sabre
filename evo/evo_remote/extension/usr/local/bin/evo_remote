@@ -1,0 +1,31 @@
+#!/bin/sh
+if [ "$1" = "install" ]
+then 
+  if ! grep -q "evo_remote.tcz" /mnt/mmcblk0p2/tce/onboot.lst; then echo "evo_remote.tcz" >> /mnt/mmcblk0p2/tce/onboot.lst; fi 
+
+  sudo mount /mnt/mmcblk0p1/ 2> /dev/null
+  sudo sed -i '/.*dtoverlay=gpio-ir.*/d' /mnt/mmcblk0p1/config.txt
+  sudo sed -i '/^#---End-Custom/i dtoverlay=gpio-ir,gpio_pin=4' /mnt/mmcblk0p1/config.txt
+  sudo sed -i "s/.*USER_COMMAND_2.*/USER_COMMAND_2=\"evo_remote\"/"  /usr/local/etc/pcp/pcp.cfg
+
+  tce-load -wli pcp-lirc 2> /dev/null
+  tce-load -li pcp-lirc 2> /dev/null
+  if ! grep -q "pcp-lirc.tcz" /mnt/mmcblk0p2/tce/onboot.lst; then echo "pcp-lirc.tcz" >> /mnt/mmcblk0p2/tce/onboot.lst; fi 
+else   
+  echo "(re)loading lircd..."
+  sudo killall lircd
+  sudo /usr/local/sbin/lircd \
+  -i \
+  -o /var/run/lirc/lircd \
+  -H default \
+  -d /dev/lirc0 \
+  -U /usr/local/lib/lirc/plugins/ \
+  /usr/local/etc/evo_remote/lircd.conf &&
+  echo "...ok"
+  echo "(re)loading irexec"
+  /usr/local/bin/irexec /usr/local/etc/evo_remote/irexec.lircrc &
+  echo "...ok"
+fi
+
+
+
