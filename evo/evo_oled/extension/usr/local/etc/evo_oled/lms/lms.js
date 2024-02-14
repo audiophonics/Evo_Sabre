@@ -318,9 +318,9 @@ function _Player(player_info, connection){
   this.state = "stop";
   this.formatedMainString = "";
   this.watchingIdle = false;
-	this.iddle = false;
-	this._iddleTimeout = null;
-	this.iddletime = 900;
+	this.idle = false;
+	this._idleTimeout = null;
+	this.idletime = 900;
 	
 	//this._subscription = null;
 }
@@ -406,6 +406,10 @@ _Player.prototype.processChanges = function(key, data){
 		this.resetIdleTimeout();
 		this.emit( "stateChange", data );
 	}
+	else if(key === "power"){
+		this.resetIdleTimeout();
+		this.emit( "powerChange", data );
+	}
 	else if( ["can_seek", "time", "duration"].includes(key)){
 		this.seekFormat();
 		this.emit( "seekChange", this.formatedSeek );
@@ -438,29 +442,29 @@ _Player.prototype.processChanges = function(key, data){
 }
 
 // should use inheritance here 
-_Player.prototype.watchIdleState = function(iddletime){
+_Player.prototype.watchIdleState = function(idletime){
 	this.watchingIdle = true;
-	this.iddletime = iddletime;
-	clearTimeout(this._iddleTimeout);
-	this._iddleTimeout = setTimeout( ()=>{
+	this.idletime = idletime;
+	clearTimeout(this._idleTimeout);
+	this._idleTimeout = setTimeout( ()=>{
 		if(! this.watchingIdle ) return;
-		this.iddle = true;
-		this.emit("iddleStart")
-	}, this.iddletime );
+		this.idle = true;
+		this.emit("idleStart")
+	}, this.idletime );
 }
 // should use inheritance here 
 _Player.prototype.resetIdleTimeout = function(){
 	if(! this.watchingIdle ) return;
-	if( this.iddle  ) this.emit("iddleStop");
-	this.iddle = false;
-	this._iddleTimeout.refresh();
+	if( this.idle  ) this.emit("idleStop");
+	this.idle = false;
+	this._idleTimeout.refresh();
 }
 // should use inheritance here 
 _Player.prototype.clearIdleTimeout = function(){
 	this.watchingIdle = false;
-	if( this.iddle  ) this.emit("iddleStop");
-	this.iddle = false;
-	clearTimeout(this._iddleTimeout);
+	if( this.idle  ) this.emit("idleStop");
+	this.idle = false;
+	clearTimeout(this._idleTimeout);
 }
 
 _Player.prototype._checkIsLocal = function(){
@@ -554,10 +558,4 @@ async function getlocalStreamer( path ){
 }
 
 module.exports = getlocalStreamer;
-
-
-
-
-
-
 

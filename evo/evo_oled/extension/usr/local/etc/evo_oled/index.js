@@ -20,6 +20,10 @@ var LOGO_DURATION = 5000; // in ms
 var CONTRAST = 254; // range 1-254
 var extn_exit_sleep_mode = false;
 
+// PJS : Extract the date and time formats
+var DATE_FORMAT = "DD/MM/YYYY"
+var TIME_FORMAT = "HH:mm:ss"
+
 
 const opts = {
 	width: 256,
@@ -139,8 +143,8 @@ ap_oled.prototype.listen_to = async function(api,frequency){
       this.handle_sleep(true);	
       
       streamer.on("connectionLost", d =>{
-        clearTimeout(this.iddle_timeout);
-        this.iddle_timeout = null;
+        clearTimeout(this.idle_timeout);
+        this.idle_timeout = null;
         clearInterval(this.update_interval);
         clearInterval(sleepMonitor)
         this.page = null;
@@ -160,6 +164,17 @@ ap_oled.prototype.listen_to = async function(api,frequency){
       streamer.on("volumeChange", d=>{
         this.data.volume = d;
         this.handle_sleep(true);	
+      })
+	  streamer.on("powerChange", d=>{
+		this.powerState = d
+		if (this.powerState == 1) {			
+			this.handle_sleep(true);
+		}
+		else {
+			//this.idle_timeout = false;
+			this.clock_mode()
+			this.handle_sleep(true);
+		}
       })
       streamer.on("seekChange", d=>{
         this.data.seek_string = streamer.formatedSeek.seek_string;
@@ -262,8 +277,8 @@ if (this.page === "clock") return;
 	
 	this.refresh_action = ()=>{
 		this.driver.buffer.fill(0x00);
-		let fdate = date.format(new Date(),'YYYY/MM/DD'),
-		ftime = date.format(new Date(),'HH:mm:ss');
+		let fdate = date.format(new Date(),DATE_FORMAT),
+		ftime = date.format(new Date(),TIME_FORMAT);
 		
 		this.driver.setCursor(90, 0);
 		this.driver.writeString( fonts.monospace ,1,fdate,3);
@@ -323,6 +338,8 @@ if (this.page === "lms_not_found") return;
 ap_oled.prototype.playback_mode = function(){
     
 	if (this.page === "playback") return;
+	if (this.powerState == 0) return;
+
 	clearInterval(this.update_interval);
 	
  	this.scroller_x = 0;
@@ -447,25 +464,28 @@ ap_oled.prototype.get_ip = function(){
 
 
 ap_oled.prototype.handle_sleep = function(exit_sleep, nopostdisplay = false){
-	console.log("exit_sleep", exit_sleep)
+	// console.log("exit_sleep", exit_sleep)
 	if( !exit_sleep ){ // Est-ce que l'afficheur devrait passer en mode veille ? 
 		
-		if(!this.iddle_timeout){ // vérifie si l'écran n'attend pas déjà de passer en veille (instruction initiée dans un cycle précédent)
+		if(!this.idle_timeout){ // vérifie si l'écran n'attend pas déjà de passer en veille (instruction initiée dans un cycle précédent)
 			
 		
 			let _deepsleep_ = ()=>{this.deep_sleep();}
 		
 			let _screensaver_ = ()=>{
 				this.snake_screensaver();
-				this.iddle_timeout = setTimeout(_deepsleep_,TIME_BEFORE_DEEPSLEEP);
+				this.idle_timeout = setTimeout(_deepsleep_,TIME_BEFORE_DEEPSLEEP);
 			}
 			
-			let _clock_ = ()=>{
-				this.clock_mode();
-				this.iddle_timeout = setTimeout(_screensaver_,TIME_BEFORE_SCREENSAVER);
-			}
+//			let _clock_ = ()=>{
+//				this.clock_mode();
+//				this.idle_timeout = setTimeout(_screensaver_,TIME_BEFORE_SCREENSAVER);
+//			}
 			
-			this.iddle_timeout = setTimeout( _clock_ , TIME_BEFORE_CLOCK );
+//			this.idle_timeout = setTimeout( _clock_ , TIME_BEFORE_CLOCK );
+
+			this.idle_timeout = setTimeout(_screensaver_,TIME_BEFORE_SCREENSAVER);
+
 		}
 	}
 	else{
@@ -478,9 +498,9 @@ ap_oled.prototype.handle_sleep = function(exit_sleep, nopostdisplay = false){
 			this.playback_mode();
 		}
 
-		if(this.iddle_timeout){
-			clearTimeout(this.iddle_timeout);
-			this.iddle_timeout = null;
+		if(this.idle_timeout){
+			clearTimeout(this.idle_timeout);
+			this.idle_timeout = null;
 		}
 	}
 }
@@ -493,9 +513,11 @@ fs.readFile(default_config_path+"/config.json",(err,data)=>{
 		try { 
 			data = JSON.parse( data.toString() );
 			console.log("[EVO DISPLAY#2] : Config loaded :",data);
-			TIME_BEFORE_SCREENSAVER = (data && data.sleep_after.value) ? data.sleep_after.value  * 1000 : TIME_BEFORE_SCREENSAVER;
-			TIME_BEFORE_DEEPSLEEP = (data && data.deep_sleep_after.value) ? data.deep_sleep_after.value  * 1000 : TIME_BEFORE_DEEPSLEEP;
-			CONTRAST = (data && data.contrast.value) ? data.contrast.value : CONTRAST;
+			TIME_BEFORE_SCREENSAVER = (data && data.sleep_after) ? data.sleep_after  * 1000 : TIME_BEFORE_SCREENSAVER;
+			TIME_BEFORE_DEEPSLEEP = (data && data.deep_sleep_after) ? data.deep_sleep_after  * 1000 : TIME_BEFORE_DEEPSLEEP;
+			CONTRAST = (data && data.contrast) ? data.contrast : CONTRAST;
+			DATE_FORMAT = (data && data.date_format) ? data.date_format : DATE_FORMAT;
+			TIME_FORMAT = (data && data.time_format) ? data.time_format : TIME_FORMAT;
 		} catch(e){fail_warn()}
 	}
 	
