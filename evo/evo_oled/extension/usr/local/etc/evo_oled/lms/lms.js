@@ -312,7 +312,7 @@ function _Player(player_info, connection){
 	
 	this.isLocal = this._checkIsLocal();
 	this.id = this.serverData.playerid;
-	this.name = this.serverData.name;
+	this.name = this.serverData.name;	
 	this.playerData = {};
   
   this.state = "stop";
@@ -329,7 +329,7 @@ function _Player(player_info, connection){
 _Player.prototype.subscribe = function(refreshRate){
 	
 	refreshRate = refreshRate || 1;
-	const query = `${this.id} status - 1 tags:aCJjKTolrx subscribe:${refreshRate}`;
+	const query = `${this.id} status - 1 tags:aCJjKTolrxI subscribe:${refreshRate}`;
 	
 	return this.connection.query(query)
 	.then(response=>{
@@ -425,6 +425,10 @@ _Player.prototype.processChanges = function(key, data){
 	else if(key === "samplerate"){
 		this.emit( "sampleRateChange", data );
 		this.emit( "line0", "Sample Rate : " + data );
+	}
+	else if(key === "samplesize"){
+		this.emit( "sampleSizeChange", data );
+		this.emit( "line0", "Sample Size : " + data );
 	}
 	else if(key === "type"){
 		this.emit( "encodingChange", data );

@@ -12,10 +12,9 @@ var DRIVER;
 
 const default_config_path = fs.readFileSync(__dirname + '/lms/default_path').toString() || "./";
 
-
 var TIME_BEFORE_CLOCK = 6000; // in ms
-var TIME_BEFORE_SCREENSAVER = 60000; // in ms
-var TIME_BEFORE_DEEPSLEEP = 120000; // in ms
+var TIME_BEFORE_SCREENSAVER = 120000; // in ms
+var TIME_BEFORE_DEEPSLEEP = 300000; // in ms
 var LOGO_DURATION = 5000; // in ms
 var CONTRAST = 254; // range 1-254
 var extn_exit_sleep_mode = false;
@@ -23,6 +22,8 @@ var extn_exit_sleep_mode = false;
 // PJS : Extract the date and time formats
 var DATE_FORMAT = "DD/MM/YYYY"
 var TIME_FORMAT = "HH:mm:ss"
+
+var PENDINGSETCONTRAST = false
 
 
 const opts = {
@@ -61,15 +62,20 @@ function server(req,res){
 						DRIVER.refresh_action();
 					})
 				};
+				console.log("[EVO DISPLAY#2] CONTRAST set to:", CONTRAST)
+				PENDINGSETCONTRAST = true
+
 			}
 			else{ res.end("0") }
 			break;
 		case 'sleep_after':
 			TIME_BEFORE_SCREENSAVER = value;
+			console.log("[EVO DISPLAY#2] TIME_BEFORE_SCREENSAVER set to:", TIME_BEFORE_SCREENSAVER)
 			res.end("1");
 			break;
 		case 'deep_sleep_after':
 			TIME_BEFORE_DEEPSLEEP = value;
+			console.log("[EVO DISPLAY#2] TIME_BEFORE_DEEPSLEEP set to:", TIME_BEFORE_DEEPSLEEP)
 			res.end("1");
 			break;
 		default:
@@ -92,6 +98,7 @@ function ap_oled(opts){
     volume : null,
     samplerate : null,
     bitdepth : null,
+	samplesize : null,
     bitrate : null,
     seek : null,
     duration : null,
@@ -171,9 +178,11 @@ ap_oled.prototype.listen_to = async function(api,frequency){
 			this.handle_sleep(true);
 		}
 		else {
-			//this.idle_timeout = false;
+//			console.log("[POWEROFF] Enabling Clock: ", new Date())
 			this.clock_mode()
-			this.handle_sleep(true);
+//			clearTimeout(this.idle_timeout);
+			this.idle_timeout=null
+			this.handle_sleep(false);
 		}
       })
       streamer.on("seekChange", d=>{
@@ -181,15 +190,46 @@ ap_oled.prototype.listen_to = async function(api,frequency){
         this.data.ratiobar  = streamer.formatedSeek.ratiobar ;
         this.handle_sleep(true);	
       })
+
+	        
+	  const formatSamplerate = (data)=>{
+		switch (data){
+			case "176.4k":
+				data = "DSD64"
+				break;
+			case "352.8k":
+				data = "DSD128"
+				break;
+			case "705.6k":
+				data = "DSD256"
+				break;
+			default:
+				data = (parseFloat(data)/1000).toString() + "k"
+			}
+		return data
+	  }
+      	        
+	  const formatSamplesize = (data)=>{
+		switch (data){
+			case "16":
+			case "24":
+			case "32":
+				data = data + "Bit"
+				break;
+			}	
+		return data
+	  }
       
       const foot = ()=>{
         this.footertext = "";
 				if ( streamer.playerData.bitrate ) this.footertext += streamer.playerData.bitrate + " "
-				if ( streamer.playerData.samplerate ) this.footertext +=streamer.playerData.samplerate + " "
-      }
-      
+				if ( streamer.playerData.samplerate ) this.footertext +=formatSamplerate(streamer.playerData.samplerate) + " "
+				if ( streamer.playerData.samplesize ) this.footertext +=formatSamplesize(streamer.playerData.samplesize) + " "
+			}
+
       streamer.on("bitRateChange",    ()=>foot()  );
       streamer.on("sampleRateChange", ()=>foot()  );
+	  streamer.on("sampleSizeChange", ()=>foot()  );
       streamer.on("encodingChange",   d=> this.data.trackType = d );
       streamer.on("stateChange",      d=> this.data.status = d    );
       streamer.on("repeatChange",     d=> {
@@ -197,7 +237,6 @@ ap_oled.prototype.listen_to = async function(api,frequency){
         this.data.repeat = null;
         if(d == 1 )  this.data.repeatSingle = true;
         if(d == 2 )  this.data.repeat = true;
-        
       });
       
       
@@ -319,7 +358,7 @@ if (this.page === "lms_not_found") return;
 		
 		this.driver.setCursor(10, 0);
 		this.driver.writeString( fonts.monospace ,2,"LMS IS NOT RUNNING",3);
-		
+
 		this.driver.setCursor(10, 25);
 		this.driver.writeString( fonts.monospace ,2,"Retrying in... "+timer,3);
 		
@@ -338,7 +377,7 @@ if (this.page === "lms_not_found") return;
 ap_oled.prototype.playback_mode = function(){
     
 	if (this.page === "playback") return;
-	if (this.powerState == 0) return;
+	if (this.powerState == 0) return;  //Prevent clock being overwritten if power is off on startup
 
 	clearInterval(this.update_interval);
 	
@@ -484,6 +523,8 @@ ap_oled.prototype.handle_sleep = function(exit_sleep, nopostdisplay = false){
 			
 //			this.idle_timeout = setTimeout( _clock_ , TIME_BEFORE_CLOCK );
 
+//			console.log("setTimeout: ", new Date())
+
 			this.idle_timeout = setTimeout(_screensaver_,TIME_BEFORE_SCREENSAVER);
 
 		}
@@ -492,7 +533,13 @@ ap_oled.prototype.handle_sleep = function(exit_sleep, nopostdisplay = false){
 		if(this.status_off){
 			this.status_off = null;
 			this.driver.turnOnDisplay();
+			if (PENDINGSETCONTRAST == true){
+				this.driver.setContrast(CONTRAST) // Reset the contrast incase it was changed with display off
+				console.log("[EVO DISPLAY#2] : Updated contrast set on screen wake")
+			}
 		}
+
+		PENDINGSETCONTRAST = false  // If the screen was on, contrast has already been changed
 		
 		if(this.page !== "spdif" ){
 			this.playback_mode();
