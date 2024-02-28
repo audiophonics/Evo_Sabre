@@ -19,7 +19,7 @@ function getConfig(path){
     return config;
   }
   catch(err){
-    console.warn('[LMS] : no config file found in', path, 'fallback to default config', err);
+//    console.warn('[LMS] : no config file found in', path, 'fallback to default config', err);
     return {
       port : 9090,
       host : "127.0.0.1"
@@ -27,8 +27,87 @@ function getConfig(path){
   }
 }
 
+function getPCPConfig(){
+	try {
+		// read contents of the file
+		const data = fs.readFileSync('/usr/local/etc/pcp/pcp.cfg', 'UTF-8')
+	  
+		// split the contents by new line
+		const lines = data.split(/\r?\n/)
+	  
+		var serverIP = ""
+
+		// print all lines
+		lines.forEach(line => {
+		  if (line.substring(0,9) == "SERVER_IP"){
+			  if (line.split("=")[1]!='""'){
+				serverIP = (line.split("=")[1]).replaceAll('"','')
+			  }
+			  else{
+				serverIP = "127.0.0.1"
+			  }
+		  }
+		})
+
+		return {
+			port : 9090,
+			host : serverIP
+		  }
+
+	  } catch (err) {
+		return {
+			port : 9090,
+			host : "127.0.0.1"
+		  }
+	  }
+}
 
 
+
+async function discoverLMS(){
+
+	const dgram = require('dgram');
+	const message = new Buffer.from('eCLIP\0');
+	
+	const promise = new Promise((resolve) => {
+
+		const socket = dgram.createSocket('udp4');
+			
+		socket.on('listening', function () {
+			socket.setBroadcast(true);
+			socket.send(message, 0, message.length, 3483, '255.255.255.255',  () => {
+				timer = setTimeout(() => {
+					console.log('[LMS] Discovery timed out');
+					socket.close()
+					resolve( {
+						port : 9090,
+						host : "127.0.0.1"
+					})
+				}, 1000);
+			});
+		});
+		
+		socket.on('message', function (message, remote) {
+//			console.log('CLIENT RECEIVED: ', remote.address + ':' + remote.port +' - ' + message);
+//			console.log('Address: ', remote.address)
+//			console.log('CLI Port: ', parseInt(message.toString().substring(6)))	
+			clearTimeout(timer)
+			socket.close()
+			resolve( {
+				port : parseInt(message.toString().substring(6)),
+				host : remote.address
+			})
+		});
+		
+		socket.bind();
+	}
+	)
+
+	const config = await promise
+
+	return config
+
+}
 
 
 const 	util = require('util'),
@@ -312,7 +391,7 @@ function _Player(player_info, connection){
 	
 	this.isLocal = this._checkIsLocal();
 	this.id = this.serverData.playerid;
-	this.name = this.serverData.name;	
+	this.name = this.serverData.name;
 	this.playerData = {};
   
   this.state = "stop";
@@ -533,10 +612,35 @@ _Player.prototype.seekFormat = function (){
 async function getlocalStreamer( path ){
 
 
+// Get LMS Server IP from pcp.cfg if it's specified
+	var config = getPCPConfig()
+	if (config.host != "127.0.0.1"){
+		console.log("[LMS] Config loaded from PCP. LMS IP: ", config.host)
+	}
 
-  const config = getConfig(path);
+// If getPCP failed, try and read from config  
+  
+	if (config.host == "127.0.0.1") {
+		config = getConfig(path);
+		if (config.host != "127.0.0.1"){
+			console.log("[LMS] Config loaded from config file. LMS IP: ", config.host)
+		  }
+	}
 
-  const lmsinterface = new LMS_interface();
+// if getConfig fails, try discovery
+
+	if (config.host == "127.0.0.1") {
+		config = await discoverLMS()
+		if (config.host != "127.0.0.1"){
+			console.log("[LMS] Config loaded from Discovery. LMS IP: ", config.host)
+		}
+	}
+
+	if (config.host == "127.0.0.1") {
+		console.log("[LMS] Config defaulting to local LMS")
+	}	
+
+  	const lmsinterface = new LMS_interface();
 
 	let localstreamer = null,
 	error = null,
