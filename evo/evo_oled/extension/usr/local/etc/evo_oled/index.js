@@ -161,7 +161,7 @@ ap_oled.prototype.listen_to = async function(api,frequency){
       
       
       streamer.on("trackChange", d=>{
-        this.text_to_display = streamer.formatedMainString;
+        this.text_to_display = streamer.formattedMainString;
         this.driver.CacheGlyphsData( this.text_to_display);
 				this.text_width = this.driver.getStringWidthUnifont(this.text_to_display + " - ");
         this.scroller_x = 0;
@@ -186,45 +186,16 @@ ap_oled.prototype.listen_to = async function(api,frequency){
 		}
       })
       streamer.on("seekChange", d=>{
-        this.data.seek_string = streamer.formatedSeek.seek_string;
-        this.data.ratiobar  = streamer.formatedSeek.ratiobar ;
+        this.data.seek_string = streamer.formattedSeek.seek_string;
+        this.data.ratiobar  = streamer.formattedSeek.ratiobar ;
         this.handle_sleep(true);	
       })
 
-	        
-	  const formatSamplerate = (data)=>{
-		switch (data){
-			case "176.4k":
-				data = "DSD64"
-				break;
-			case "352.8k":
-				data = "DSD128"
-				break;
-			case "705.6k":
-				data = "DSD256"
-				break;
-			default:
-				data = (parseFloat(data)/1000).toString() + "k"
-			}
-		return data
-	  }
-      	        
-	  const formatSamplesize = (data)=>{
-		switch (data){
-			case "16":
-			case "24":
-			case "32":
-				data = data + "Bit"
-				break;
-			}	
-		return data
-	  }
-      
       const foot = ()=>{
         this.footertext = "";
 				if ( streamer.playerData.bitrate ) this.footertext += streamer.playerData.bitrate + " "
-				if ( streamer.playerData.samplerate ) this.footertext +=formatSamplerate(streamer.playerData.samplerate) + " "
-				if ( streamer.playerData.samplesize ) this.footertext +=formatSamplesize(streamer.playerData.samplesize) + " "
+				if ( streamer.formattedSamplerate ) this.footertext +=streamer.formattedSamplerate + " "
+				if ( streamer.formattedSamplesize ) this.footertext +=streamer.formattedSamplesize + " "
 			}
 
       streamer.on("bitRateChange",    ()=>foot()  );

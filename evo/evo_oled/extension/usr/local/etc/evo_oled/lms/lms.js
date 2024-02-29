@@ -395,7 +395,9 @@ function _Player(player_info, connection){
 	this.playerData = {};
   
   this.state = "stop";
-  this.formatedMainString = "";
+  this.formattedMainString = "";
+  this.formattedSamplesize = "";
+  this.formattedSamplerate = "";
   this.watchingIdle = false;
 	this.idle = false;
 	this._idleTimeout = null;
@@ -477,7 +479,7 @@ _Player.prototype.updateStatus = function(newStatus){
 _Player.prototype.processChanges = function(key, data){
   if( ["current_title", "title", "artist", "album"].includes(key) ){
     this.formatMainString();
-    this.emit( "trackChange", this.formatedMainString );
+    this.emit( "trackChange", this.formattedMainString );
     if(this.state === "play") this.resetIdleTimeout(); // sinon les webradios sortent l'écran de veille 
   }
 	else if(key === "mode"){
@@ -491,7 +493,7 @@ _Player.prototype.processChanges = function(key, data){
 	}
 	else if( ["can_seek", "time", "duration"].includes(key)){
 		this.seekFormat();
-		this.emit( "seekChange", this.formatedSeek );
+		this.emit( "seekChange", this.formattedSeek );
 	}
 	else if(key === "mixer volume"){
 		this.resetIdleTimeout();
@@ -502,12 +504,14 @@ _Player.prototype.processChanges = function(key, data){
 		this.emit( "line2", "Bit Rate : " + data );
 	}
 	else if(key === "samplerate"){
-		this.emit( "sampleRateChange", data );
-		this.emit( "line0", "Sample Rate : " + data );
+		this.formatSamplerate();
+		this.emit( "sampleRateChange", this.formattedSamplerate );
+		this.emit( "line0", "Sample Rate : " + this.formattedSamplerate );
 	}
 	else if(key === "samplesize"){
-		this.emit( "sampleSizeChange", data );
-		this.emit( "line0", "Sample Size : " + data );
+		this.formatSamplesize();
+		this.emit( "sampleSizeChange", this.formattedSamplesize );
+		this.emit( "line0", "Sample Size : " + this.formattedSamplesize );
 	}
 	else if(key === "type"){
 		this.emit( "encodingChange", data );
@@ -565,8 +569,40 @@ _Player.prototype._checkIsLocal = function(){
 }
 
 _Player.prototype.formatMainString = function (){
-  this.formatedMainString = this.playerData.title + (this.playerData.artist?" - " + this.playerData.artist:"") + (this.playerData.album?" - " + this.playerData.album:"");
+  this.formattedMainString = this.playerData.title + (this.playerData.artist?" - " + this.playerData.artist:"") + (this.playerData.album?" - " + this.playerData.album:"");
 }
+
+_Player.prototype.formatSamplesize = function (){
+
+	switch (this.playerData.samplesize){
+		case "16":
+		case "24":
+		case "32":
+			this.formattedSamplesize = this.playerData.samplesize + "Bit"
+			break;
+		default:
+			this.formattedSamplesize = this.playerData.samplesize
+		}	
+}
+
+_Player.prototype.formatSamplerate = function (){
+
+	switch (this.playerData.samplerate){
+		case "176.4k":
+			this.formattedSamplerate = "DSD64"
+			break;
+		case "352.8k":
+			this.formattedSamplerate = "DSD128"
+			break;
+		case "705.6k":
+			this.formattedSamplerate = "DSD256"
+			break;
+		default:
+			this.formattedSamplerate = (parseFloat(this.playerData.samplerate)/1000).toString() + "k"
+		}
+}
+
+
 
 _Player.prototype.seekFormat = function (){
 	
@@ -596,9 +632,9 @@ _Player.prototype.seekFormat = function (){
 	} 
 	seek_string = seek +" / "+ duration;
 	
-	this.formatedSeek = {seek_string:seek_string,ratiobar:ratiobar};
+	this.formattedSeek = {seek_string:seek_string,ratiobar:ratiobar};
 	
-	return( this.formatedSeek );
+	return( this.formattedSeek );
 }
 
 
