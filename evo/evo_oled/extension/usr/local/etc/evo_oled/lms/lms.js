@@ -389,6 +389,8 @@ function _Player(player_info, connection){
 	this.serverData = this.parseStatusResponse(player_info); // not parsing nor validating anything beyond this point is kinda risky
 	this.connection = connection;
 	
+	this.lmsIp = connection.address
+	
 	this.isLocal = this._checkIsLocal();
 	this.id = this.serverData.playerid;
 	this.name = this.serverData.name;
