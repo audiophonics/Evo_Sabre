@@ -19,7 +19,7 @@ function getConfig(path){
     return config;
   }
   catch(err){
-    console.warn('[LMS] : no config file found in', path, 'fallback to default config', err);
+//    console.warn('[LMS] : no config file found in', path, 'fallback to default config', err);
     return {
       port : 9090,
       host : "127.0.0.1"
@@ -27,8 +27,87 @@ function getConfig(path){
   }
 }
 
+function getPCPConfig(){
+	try {
+		// read contents of the file
+		const data = fs.readFileSync('/usr/local/etc/pcp/pcp.cfg', 'UTF-8')
+	  
+		// split the contents by new line
+		const lines = data.split(/\r?\n/)
+	  
+		var serverIP = ""
+
+		// print all lines
+		lines.forEach(line => {
+		  if (line.substring(0,9) == "SERVER_IP"){
+			  if (line.split("=")[1]!='""'){
+				serverIP = (line.split("=")[1]).replaceAll('"','')
+			  }
+			  else{
+				serverIP = "127.0.0.1"
+			  }
+		  }
+		})
+
+		return {
+			port : 9090,
+			host : serverIP
+		  }
+
+	  } catch (err) {
+		return {
+			port : 9090,
+			host : "127.0.0.1"
+		  }
+	  }
+}
 
 
+
+async function discoverLMS(){
+
+	const dgram = require('dgram');
+	const message = new Buffer.from('eCLIP\0');
+	
+	const promise = new Promise((resolve) => {
+
+		const socket = dgram.createSocket('udp4');
+			
+		socket.on('listening', function () {
+			socket.setBroadcast(true);
+			socket.send(message, 0, message.length, 3483, '255.255.255.255',  () => {
+				timer = setTimeout(() => {
+					console.log('[LMS] Discovery timed out');
+					socket.close()
+					resolve( {
+						port : 9090,
+						host : "127.0.0.1"
+					})
+				}, 1000);
+			});
+		});
+		
+		socket.on('message', function (message, remote) {
+//			console.log('CLIENT RECEIVED: ', remote.address + ':' + remote.port +' - ' + message);
+//			console.log('Address: ', remote.address)
+//			console.log('CLI Port: ', parseInt(message.toString().substring(6)))	
+			clearTimeout(timer)
+			socket.close()
+			resolve( {
+				port : parseInt(message.toString().substring(6)),
+				host : remote.address
+			})
+		});
+		
+		socket.bind();
+	}
+	)
+
+	const config = await promise
+
+	return config
+
+}
 
 
 const 	util = require('util'),
@@ -310,17 +389,21 @@ function _Player(player_info, connection){
 	this.serverData = this.parseStatusResponse(player_info); // not parsing nor validating anything beyond this point is kinda risky
 	this.connection = connection;
 	
+	this.lmsIp = connection.address
+	
 	this.isLocal = this._checkIsLocal();
 	this.id = this.serverData.playerid;
 	this.name = this.serverData.name;
 	this.playerData = {};
   
   this.state = "stop";
-  this.formatedMainString = "";
+  this.formattedMainString = "";
+  this.formattedSamplesize = "";
+  this.formattedSamplerate = "";
   this.watchingIdle = false;
-	this.iddle = false;
-	this._iddleTimeout = null;
-	this.iddletime = 900;
+	this.idle = false;
+	this._idleTimeout = null;
+	this.idletime = 900;
 	
 	//this._subscription = null;
 }
@@ -329,7 +412,7 @@ function _Player(player_info, connection){
 _Player.prototype.subscribe = function(refreshRate){
 	
 	refreshRate = refreshRate || 1;
-	const query = `${this.id} status - 1 tags:aCJjKTolrx subscribe:${refreshRate}`;
+	const query = `${this.id} status - 1 tags:aCJjKTolrxI subscribe:${refreshRate}`;
 	
 	return this.connection.query(query)
 	.then(response=>{
@@ -398,7 +481,7 @@ _Player.prototype.updateStatus = function(newStatus){
 _Player.prototype.processChanges = function(key, data){
   if( ["current_title", "title", "artist", "album"].includes(key) ){
     this.formatMainString();
-    this.emit( "trackChange", this.formatedMainString );
+    this.emit( "trackChange", this.formattedMainString );
     if(this.state === "play") this.resetIdleTimeout(); // sinon les webradios sortent l'écran de veille 
   }
 	else if(key === "mode"){
@@ -406,9 +489,13 @@ _Player.prototype.processChanges = function(key, data){
 		this.resetIdleTimeout();
 		this.emit( "stateChange", data );
 	}
+	else if(key === "power"){
+		this.resetIdleTimeout();
+		this.emit( "powerChange", data );
+	}
 	else if( ["can_seek", "time", "duration"].includes(key)){
 		this.seekFormat();
-		this.emit( "seekChange", this.formatedSeek );
+		this.emit( "seekChange", this.formattedSeek );
 	}
 	else if(key === "mixer volume"){
 		this.resetIdleTimeout();
@@ -419,8 +506,14 @@ _Player.prototype.processChanges = function(key, data){
 		this.emit( "line2", "Bit Rate : " + data );
 	}
 	else if(key === "samplerate"){
-		this.emit( "sampleRateChange", data );
-		this.emit( "line0", "Sample Rate : " + data );
+		this.formatSamplerate();
+		this.emit( "sampleRateChange", this.formattedSamplerate );
+		this.emit( "line0", "Sample Rate : " + this.formattedSamplerate );
+	}
+	else if(key === "samplesize"){
+		this.formatSamplesize();
+		this.emit( "sampleSizeChange", this.formattedSamplesize );
+		this.emit( "line0", "Sample Size : " + this.formattedSamplesize );
 	}
 	else if(key === "type"){
 		this.emit( "encodingChange", data );
@@ -438,29 +531,29 @@ _Player.prototype.processChanges = function(key, data){
 }
 
 // should use inheritance here 
-_Player.prototype.watchIdleState = function(iddletime){
+_Player.prototype.watchIdleState = function(idletime){
 	this.watchingIdle = true;
-	this.iddletime = iddletime;
-	clearTimeout(this._iddleTimeout);
-	this._iddleTimeout = setTimeout( ()=>{
+	this.idletime = idletime;
+	clearTimeout(this._idleTimeout);
+	this._idleTimeout = setTimeout( ()=>{
 		if(! this.watchingIdle ) return;
-		this.iddle = true;
-		this.emit("iddleStart")
-	}, this.iddletime );
+		this.idle = true;
+		this.emit("idleStart")
+	}, this.idletime );
 }
 // should use inheritance here 
 _Player.prototype.resetIdleTimeout = function(){
 	if(! this.watchingIdle ) return;
-	if( this.iddle  ) this.emit("iddleStop");
-	this.iddle = false;
-	this._iddleTimeout.refresh();
+	if( this.idle  ) this.emit("idleStop");
+	this.idle = false;
+	this._idleTimeout.refresh();
 }
 // should use inheritance here 
 _Player.prototype.clearIdleTimeout = function(){
 	this.watchingIdle = false;
-	if( this.iddle  ) this.emit("iddleStop");
-	this.iddle = false;
-	clearTimeout(this._iddleTimeout);
+	if( this.idle  ) this.emit("idleStop");
+	this.idle = false;
+	clearTimeout(this._idleTimeout);
 }
 
 _Player.prototype._checkIsLocal = function(){
@@ -478,8 +571,40 @@ _Player.prototype._checkIsLocal = function(){
 }
 
 _Player.prototype.formatMainString = function (){
-  this.formatedMainString = this.playerData.title + (this.playerData.artist?" - " + this.playerData.artist:"") + (this.playerData.album?" - " + this.playerData.album:"");
+  this.formattedMainString = this.playerData.title + (this.playerData.artist?" - " + this.playerData.artist:"") + (this.playerData.album?" - " + this.playerData.album:"");
 }
+
+_Player.prototype.formatSamplesize = function (){
+
+	switch (this.playerData.samplesize){
+		case "16":
+		case "24":
+		case "32":
+			this.formattedSamplesize = this.playerData.samplesize + "Bit"
+			break;
+		default:
+			this.formattedSamplesize = this.playerData.samplesize
+		}	
+}
+
+_Player.prototype.formatSamplerate = function (){
+
+	switch (this.playerData.samplerate){
+		case "176.4k":
+			this.formattedSamplerate = "DSD64"
+			break;
+		case "352.8k":
+			this.formattedSamplerate = "DSD128"
+			break;
+		case "705.6k":
+			this.formattedSamplerate = "DSD256"
+			break;
+		default:
+			this.formattedSamplerate = (parseFloat(this.playerData.samplerate)/1000).toString() + "k"
+		}
+}
+
+
 
 _Player.prototype.seekFormat = function (){
 	
@@ -509,9 +634,9 @@ _Player.prototype.seekFormat = function (){
 	} 
 	seek_string = seek +" / "+ duration;
 	
-	this.formatedSeek = {seek_string:seek_string,ratiobar:ratiobar};
+	this.formattedSeek = {seek_string:seek_string,ratiobar:ratiobar};
 	
-	return( this.formatedSeek );
+	return( this.formattedSeek );
 }
 
 
@@ -525,10 +650,35 @@ _Player.prototype.seekFormat = function (){
 async function getlocalStreamer( path ){
 
 
+// Get LMS Server IP from pcp.cfg if it's specified
+	var config = getPCPConfig()
+	if (config.host != "127.0.0.1"){
+		console.log("[LMS] Config loaded from PCP. LMS IP: ", config.host)
+	}
 
-  const config = getConfig(path);
+// If getPCP failed, try and read from config  
+  
+	if (config.host == "127.0.0.1") {
+		config = getConfig(path);
+		if (config.host != "127.0.0.1"){
+			console.log("[LMS] Config loaded from config file. LMS IP: ", config.host)
+		  }
+	}
 
-  const lmsinterface = new LMS_interface();
+// if getConfig fails, try discovery
+
+	if (config.host == "127.0.0.1") {
+		config = await discoverLMS()
+		if (config.host != "127.0.0.1"){
+			console.log("[LMS] Config loaded from Discovery. LMS IP: ", config.host)
+		}
+	}
+
+	if (config.host == "127.0.0.1") {
+		console.log("[LMS] Config defaulting to local LMS")
+	}	
+
+  	const lmsinterface = new LMS_interface();
 
 	let localstreamer = null,
 	error = null,
@@ -554,10 +704,4 @@ async function getlocalStreamer( path ){
 }
 
 module.exports = getlocalStreamer;
-
-
-
-
-
-
 
